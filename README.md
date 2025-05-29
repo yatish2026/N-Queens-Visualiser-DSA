@@ -35,11 +35,10 @@ This project was built as a hands-on application of core **Data Structures and A
 
 ## 📂 Project Structure
 nqueen-visualizer/
-│
-├── index.html # Main HTML structure
-├── style.css # Clean and modern visual design
-├── app.js # Backtracking algorithm + visualization logic
-└── README.md # Project documentation
+ index.html # Main HTML structure
+ style.css # Clean and modern visual design
+ app.js # Backtracking algorithm + visualization logic
+ README.md # Project documentation
 
 
 
