@@ -16,7 +16,7 @@ An interactive and educational visualizer for the classic **N-Queens Problem**, 
 
 ## 📸 Preview
 
-![N-Queen Visualizer Demo]
+![N-Queen Visualizer Demo] https://yatish2026.github.io/N-Queens-Visualiser-DSA/
 
 ---
 
