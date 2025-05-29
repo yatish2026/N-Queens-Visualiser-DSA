@@ -1,97 +1,227 @@
-const boardContainer = document.getElementById("n-queen-board");
-const playBtn = document.getElementById("play-button");
-const numberInput = document.getElementById("numberbox");
-const arrangementDisplay = document.getElementById("queen-arrangement");
+'use strict'
+const numberbox = document.getElementById("numberbox");
 const slider = document.getElementById("slider");
-const progressBar = document.getElementById("progress-bar");
+const progressBar = document.getElementById("progress-bar")
+const playButton = document.getElementById('play-button');
+const pauseButton = document.getElementById("pause-button");
 
-let delay = 60;
+const queen = '<i class="fas fa-chess-queen" style="color:#000"></i>';
+
+let n, speed, tempSpeed, q, Board = 0;
+// Board = 0;
+
+// Creating array for all the possible arrangements of the N-Queen
+let array = [0, 2, 1, 1, 3, 11, 5, 41, 93];
+
+// Used to store the state of the boards;
+let pos = {};
+// let position = {};
+
+
+// Setting the slider value onSlide
+speed = (100 - slider.value) * 10;
+tempSpeed = speed;
 slider.oninput = function() {
-    delay = this.value;
-    progressBar.style.width = delay + "%";
-};
-
-function isSafe(board, row, col, n) {
-    for (let i = 0; i < col; i++)
-        if (board[row][i]) return false;
-
-    for (let i = row, j = col; i >= 0 && j >= 0; i--, j--)
-        if (board[i][j]) return false;
-
-    for (let i = row, j = col; i < n && j >= 0; i++, j--)
-        if (board[i][j]) return false;
-
-    return true;
+    progressBar.style.width = this.value + "%";
+    speed = slider.value;
+    speed = (100 - speed) * 10;
 }
 
-async function solveNQUtil(board, col, n, result) {
-    if (col >= n) {
-        result.push(board.map(row => row.slice()));
+class Queen {
+    constructor() {
+        this.position = Object.assign({}, pos);
+        // this.Board = 0;
+        this.uuid = [];
+    }
+
+    nQueen = async() => {
+        Board = 0;
+        this.position[`${Board}`] = {};
+        numberbox.disabled = true;
+        await q.solveQueen(Board, 0, n);
+        await q.clearColor(Board);
+        numberbox.disabled = false;
+    }
+
+    isValid = async(board, r, col, n) => {
+        //Setting the current box color to orange
+        const table = document.getElementById(`table-${this.uuid[board]}`);
+        const currentRow = table.firstChild.childNodes[r];
+        const currentColumn = currentRow.getElementsByTagName("td")[col];
+        currentColumn.innerHTML = queen;
+        // currentColumn.style.backgroundColor = "#FF9F1C";
+        await q.delay();
+
+        // Checking the queen in the same column
+        for (let i = r - 1; i >= 0; --i) {
+            const row = table.firstChild.childNodes[i];
+            const column = row.getElementsByTagName("td")[col];
+
+            const value = column.innerHTML;
+
+            if (value == queen) {
+                column.style.backgroundColor = "#FB5607";
+                currentColumn.innerHTML = "-"
+                return false;
+            }
+            column.style.backgroundColor = "#ffca3a";
+            await q.delay();
+        }
+
+        //Checking the upper left diagonal
+        for (let i = r - 1, j = col - 1; i >= 0 && j >= 0; --i, --j) {
+            const row = table.firstChild.childNodes[i];
+            const column = row.getElementsByTagName("td")[j];
+            const value = column.innerHTML;
+
+            if (value == queen) {
+                column.style.backgroundColor = "#fb5607";
+                currentColumn.innerHTML = "-"
+                return false;
+            }
+            column.style.backgroundColor = "#ffca3a";
+            await q.delay();
+        }
+
+        // Checking the upper right diagonal
+        for (let i = r - 1, j = col + 1; i >= 0 && j < n; --i, ++j) {
+            const row = table.firstChild.childNodes[i];
+            const column = row.getElementsByTagName("td")[j];
+
+            const value = column.innerHTML;
+
+            if (value == queen) {
+                column.style.backgroundColor = "#FB5607";
+                currentColumn.innerHTML = "-"
+                return false;
+            }
+            column.style.backgroundColor = "#ffca3a";
+            await q.delay();
+        }
         return true;
     }
 
-    let res = false;
-    for (let i = 0; i < n; i++) {
-        if (isSafe(board, i, col, n)) {
-            board[i][col] = 1;
-            res = await solveNQUtil(board, col + 1, n, result) || res;
-            board[i][col] = 0;
+    clearColor = async(board) => {
+        for (let j = 0; j < n; ++j) {
+            const table = document.getElementById(`table-${this.uuid[board]}`);
+            const row = table.firstChild.childNodes[j];
+            for (let k = 0; k < n; ++k)
+                (j + k) & 1 ?
+                (row.getElementsByTagName("td")[k].style.backgroundColor = "#FF9F1C") :
+                (row.getElementsByTagName("td")[k].style.backgroundColor = "#FCCD90");
         }
     }
 
-    return res;
+    delay = async() => {
+        await new Promise((done) => setTimeout(() => done(), speed));
+    }
+
+    solveQueen = async(board, r, n) => {
+        if (r == n) {
+            ++Board;
+            let table = document.getElementById(`table-${this.uuid[Board]}`);
+            for (let k = 0; k < n; ++k) {
+                let row = table.firstChild.childNodes[k];
+                row.getElementsByTagName("td")[this.position[board][k]].innerHTML = queen;
+            }
+            this.position[Board] = this.position[board];
+            return;
+        }
+
+        for (let i = 0; i < n; ++i) {
+            await q.delay();
+            // console.log("outside:" + board);
+            await q.clearColor(board);
+            if (await q.isValid(board, r, i, n)) {
+                await q.delay();
+                // console.log("inside:" + board)
+                await q.clearColor(board);
+                let table = document.getElementById(`table-${this.uuid[board]}`);
+                let row = table.firstChild.childNodes[r];
+                row.getElementsByTagName("td")[i].innerHTML = queen;
+
+                this.position[board][r] = i;
+
+                if (await q.solveQueen(board, r + 1, n))
+                    await q.clearColor(board);
+
+                await q.delay();
+                board = Board;
+                // console.log(this.Board)
+                table = document.getElementById(`table-${this.uuid[board]}`);
+                // console.log(JSON.parse(JSON.stringify(table)));
+                row = table.firstChild.childNodes[r];
+                row.getElementsByTagName("td")[i].innerHTML = "-";
+
+                delete this.position[`${board}`][`${r}`];
+            }
+        }
+    }
 }
 
-async function solveNQ(n) {
-    const board = Array.from({ length: n }, () => Array(n).fill(0));
-    const result = [];
+playButton.onclick = async function visualise() {
+    const chessBoard = document.getElementById("n-queen-board");
+    const arrangement = document.getElementById("queen-arrangement");
 
-    await solveNQUtil(board, 0, n, result);
-    return result;
-}
+    n = numberbox.value;
+    q = new Queen();
 
-function createBoard(board, index) {
-    const container = document.createElement("div");
-    const heading = document.createElement("h4");
-    heading.innerText = `Arrangement ${index + 1}`;
-    container.appendChild(heading);
-
-    const table = document.createElement("table");
-    board.forEach(row => {
-        const tr = document.createElement("tr");
-        row.forEach(cell => {
-            const td = document.createElement("td");
-            td.innerText = cell ? "♛" : "";
-            td.style.backgroundColor = (row.indexOf(cell) + row.length) % 2 === 0 ? "#eeeeee" : "#444444";
-            td.style.color = cell ? "#f72585" : "transparent";
-            tr.appendChild(td);
-        });
-        table.appendChild(tr);
-    });
-
-    container.appendChild(table);
-    return container;
-}
-
-playBtn.addEventListener("click", async() => {
-    const n = parseInt(numberInput.value);
-    if (isNaN(n) || n < 1 || n > 15) {
-        alert("Please enter a number between 1 and 15.");
+    if (n > 8) {
+        numberbox.value = "";
+        alert("Queen value is too large");
+        return;
+    } else if (n < 1) {
+        numberbox.value = "";
+        alert("Queen value is too small");
         return;
     }
 
-    playBtn.disabled = true;
-    boardContainer.innerHTML = "";
-    arrangementDisplay.innerText = "Calculating, please wait...";
+    // Removing all the of previous execution context
+    while (chessBoard.hasChildNodes()) {
+        chessBoard.removeChild(chessBoard.firstChild);
+    }
+    if (arrangement.hasChildNodes()) {
+        arrangement.removeChild(arrangement.lastChild)
+    }
 
-    const solutions = await solveNQ(n);
-    arrangementDisplay.innerText = `${solutions.length} Arrangements`;
+    const para = document.createElement("p");
+    para.setAttribute("class", "queen-info");
+    para.innerHTML = `For ${n}x${n} board, ${array[n] - 1} arrangements are possible.`;
+    arrangement.appendChild(para);
 
-    solutions.forEach((solution, index) => {
-        setTimeout(() => {
-            boardContainer.appendChild(createBoard(solution, index));
-        }, delay * index);
-    });
+    //Adding boards to the Div
+    if (chessBoard.childElementCount === 0) {
+        for (let i = 0; i < array[n]; ++i) {
+            q.uuid.push(Math.random());
+            let div = document.createElement('div');
+            let table = document.createElement('table');
+            let header = document.createElement('h4');
+            // div.setAttribute("id", `div-${100 + uuid[i]}`)
+            header.innerHTML = `Board ${i + 1} `
+            table.setAttribute("id", `table-${q.uuid[i]}`);
+            header.setAttribute("id", `paragraph-${i}`);
+            chessBoard.appendChild(div);
+            div.appendChild(header);
+            div.appendChild(table);
+        }
+    }
 
-    playBtn.disabled = false;
-});
+    for (let k = 0; k < array[n]; ++k) {
+        let table = document.getElementById(`table-${q.uuid[k]}`);
+        for (let i = 0; i < n; ++i) {
+            const row = table.insertRow(i); // inserting ith row
+            row.setAttribute("id", `Row${i} `);
+            for (let j = 0; j < n; ++j) {
+                const col = row.insertCell(j); // inserting jth column
+                (i + j) & 1
+                    ?
+                    (col.style.backgroundColor = "#FF9F1C") :
+                    (col.style.backgroundColor = "#FCCD90");
+                col.innerHTML = "-";
+                col.style.border = "0.3px solid #373f51";
+            }
+        }
+        await q.clearColor(k);
+    }
+    await q.nQueen();
+};
